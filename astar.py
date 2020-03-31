@@ -1,5 +1,5 @@
 """ A Star pathfinding algorithm """
-import pygame
+import pygame  
 
 class Grid:
   def __init__(self, screen, grid):
@@ -14,7 +14,7 @@ class Grid:
     for row in range(len(grid)):
       self.nodes.append([])
 
-    pygame.draw.rect(self.screen, (255, 255, 255), (0, 0, 500, 500))
+    pygame.draw.rect(self.screen, (255, 255, 255), (0, 0, 450, 450))
 
     for x in range(len(self.grid)):
       for y in range(len(self.grid[x])):
@@ -89,10 +89,12 @@ class Grid:
       children_nodes = []
 
       for coord in children_coords_relative:
+        print('relative coord', coord)
         # If coord is in the board
-        if len(self.nodes) > coord[0] and len(self.nodes[coord[0]]) > coord[1]:
+        if coord[0] >= 0 and coord[1] >= 0 and len(self.nodes) > coord[0] and len(self.nodes[coord[0]]) > coord[1]:
           # If coord is value 0
           if self.nodes[coord[0]][coord[1]].value == 0 or self.nodes[coord[0]][coord[1]].value == 4:
+            print('valid')
             self.nodes[coord[0]][coord[1]].parent = current_node
             children_nodes.append(self.nodes[coord[0]][coord[1]])
 
@@ -126,8 +128,8 @@ class Grid:
 class Node:
   def __init__(self, screen, value, x = None, y = None, parent = None):
     self.screen = screen
-    self.width = 20
-    self.height = 20
+    self.width = 15
+    self.height = 15
     self.x = x
     self.y = y
     self.value = value
@@ -160,11 +162,11 @@ class Node:
     else:
       innerColour = (0, 255, 0)
     pygame.draw.rect(self.screen, (0, 0, 0), (self.x * self.width, self.y * self.height, self.width, self.height))
-    pygame.draw.rect(self.screen, innerColour, ((self.x * self.width) + 2, (self.y * self.height) + 2, self.width - 4, self.height - 4))
+    pygame.draw.rect(self.screen, innerColour, ((self.x * self.width) + 1, (self.y * self.height) + 1, self.width - 2, self.height - 2))
 
 
 def main():
-  screen = pygame.display.set_mode((500,500))
+  screen = pygame.display.set_mode((450,550))
   pygame.display.set_caption("A Star")
   values = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],

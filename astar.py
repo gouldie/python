@@ -1,15 +1,16 @@
 """ A Star pathfinding algorithm """
-import pygame  
+import pygame
 
 class Grid:
-  def __init__(self, screen, grid):
+  def __init__(self, screen, grid, start = (3, 3), end = (20, 20)):
     self.screen = screen
     self.grid = grid
     self.nodes = []
-    self.startX = 1
-    self.startY = 1
-    self.endX = 19
-    self.endY = 19
+    self.startX = start[0]
+    self.startY = start[1]
+    self.endX = end[0]
+    self.endY = end[1]
+    self.solving = False
 
     for row in range(len(grid)):
       self.nodes.append([])
@@ -20,13 +21,30 @@ class Grid:
       for y in range(len(self.grid[x])):
         self.nodes[x].append(Node(self.screen, self.grid[x][y], x, y))
 
+    # Set up start and end node
+    self.nodes[self.startX][self.startY].value = 5
+    self.nodes[self.startX][self.startY].draw()
     self.nodes[self.endX][self.endY].value = 4
     self.nodes[self.endX][self.endY].draw()
 
-  
-  def draw(self):
-    x = 0
-    # pygame.draw.rect(self.screen, (0, 0, 0), (0, 0, 500, 500))
+  def click(self, pos):
+    if (self.solving):
+      return
+
+    posX = pos[0]
+    posY = pos[1]
+
+    x = int(posX / 15)
+    y = int(posY / 15)
+
+    print(x,y)
+
+    if self.nodes[x][y].value == 0:
+      self.nodes[x][y].value = 3
+    elif self.nodes[x][y].value == 3:
+      self.nodes[x][y].value = 0
+
+    self.nodes[x][y].draw()
 
   def distanceBetweenNodes(self, node1, node2):
     xDif = abs(node1.x - node2.x)
@@ -36,6 +54,7 @@ class Grid:
 
   def solve(self):
     print('Solving')
+    self.solving = True
     start_node = self.nodes[self.startX][self.startY]
     end_node = self.nodes[self.endX][self.endY]
 
@@ -77,6 +96,22 @@ class Grid:
         while current is not None:
           path.append((current.x, current.y))
           current = current.parent
+        path = path[::-1]
+
+        # Redraw solution path
+        for x in range(len(self.grid)):
+          for y in range(len(self.grid[x])):
+            value = self.nodes[x][y].value
+            if value == 1 or value == 2:
+              self.nodes[x][y].value = 0
+
+        for node in path:
+          self.nodes[node[0]][node[1]].value = 1
+
+        for x in range(len(self.grid)):
+          for y in range(len(self.grid[x])):
+            self.nodes[x][y].draw()
+
         return path[::-1] # Return reversed path
 
       # Generate children
@@ -89,12 +124,10 @@ class Grid:
       children_nodes = []
 
       for coord in children_coords_relative:
-        print('relative coord', coord)
         # If coord is in the board
         if coord[0] >= 0 and coord[1] >= 0 and len(self.nodes) > coord[0] and len(self.nodes[coord[0]]) > coord[1]:
           # If coord is value 0
           if self.nodes[coord[0]][coord[1]].value == 0 or self.nodes[coord[0]][coord[1]].value == 4:
-            print('valid')
             self.nodes[coord[0]][coord[1]].parent = current_node
             children_nodes.append(self.nodes[coord[0]][coord[1]])
 
@@ -150,13 +183,14 @@ class Node:
     # 2 = open list
     # 3 = block
     # 4 = goal
+    # 5 = start
 
     if self.value == 0:
       innerColour = (255, 255, 255)
     elif self.value == 1:
       innerColour = (0, 255, 0)
     elif self.value == 2:
-      innerColour = (0, 0, 255)
+      innerColour = (0, 150, 100)
     elif self.value == 3:
       innerColour = (255, 0, 0)
     else:
@@ -166,28 +200,28 @@ class Node:
 
 
 def main():
-  screen = pygame.display.set_mode((450,550))
+  screen = pygame.display.set_mode((450,450))
   pygame.display.set_caption("A Star")
   values = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -210,12 +244,16 @@ def main():
     for event in pygame.event.get():
       if event.type == pygame.QUIT:
         run = False
+      if event.type == pygame.MOUSEBUTTONDOWN:
+        pos = pygame.mouse.get_pos()
+        grid.click(pos)
       if event.type == pygame.KEYDOWN:
         if event.key == pygame.K_SPACE:
+          if grid.solving:
+            continue
           solution = grid.solve()
           print(solution)
 
-    grid.draw()
     pygame.display.update()
 
 main()
